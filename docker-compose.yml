@@ -1,0 +1,58 @@
+version: "3"
+services:
+
+  shadow-pihole:
+    image: pihole/pihole:latest
+    container_name: shadow-pihole
+    environment:
+      ServerIP: ${SERVER_IP}
+      WEBPASSWORD: "${WEBPASSWORD}"
+      IPv6: "True"
+      VIRTUAL_HOST: "${VIRTUAL_HOST}"
+      TZ: "Europe/Amsterdam"
+    volumes:
+      - './etc-pihole/:/etc/pihole/'
+      - './etc-dnsmasq.d/:/etc/dnsmasq.d/'
+    networks:
+      shadowpihole:
+        ipv4_address: 10.9.8.1
+    ports:
+      - "${PIHOLE_WEB_PORT}:80/tcp"
+      #- "53:53/tcp"
+      #- "53:53/udp"
+      #- "67:67/udp"
+      #- "80:80/tcp"
+      #- "443:443/tcp"
+    dns:
+      - 127.0.0.1
+      - 1.1.1.1
+    # Recommended but not required (DHCP needs NET_ADMIN)
+    #   https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
+    cap_add:
+      - NET_ADMIN
+    restart: unless-stopped
+
+
+
+  shadow-socks:
+    build: ../alpine-shadowsocks-libev
+    container_name: shadow-socks
+    networks:
+      shadowpihole:
+        ipv4_address: 10.9.8.2
+    ports:
+      - "${PORT}:${SRV_PORT}"
+    environment:
+      - SRV_PORT=${SRV_PORT}
+      - METHOD=${METHOD}
+      - PASSWORD=${PASSWORD}
+      - DNS_ADDR=10.9.8.1
+      - DNS_ADDR_2=10.9.8.1
+    restart: always
+  
+networks:
+  shadowpihole:
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.9.0.0/16
