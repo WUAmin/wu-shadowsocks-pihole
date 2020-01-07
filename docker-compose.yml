@@ -35,7 +35,7 @@ services:
 
 
   shadow-socks:
-    build: ../alpine-shadowsocks-libev
+    image: wuamin/alpine-shadowsocks-libev
     container_name: shadow-socks
     networks:
       shadowpihole:
